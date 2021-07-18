@@ -1,0 +1,8 @@
+# Ignore jupyter notebook checkpoints
+/.ipynb_checkpoints
+
+# Ignore Excel files
+*.xlsx
+
+#Ignore executable files
+*.exe

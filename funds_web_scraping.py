@@ -45,8 +45,11 @@ def main(browser):
         # Using a regular expression to extract the value of the option
         option_value = re.findall('\"([0-9]{1,2})',str(options[i]))[0]
         option_text = option.text
-        options_dict[option_value] = option_text
-        print(option_value,option_text)
+		if option_text not in options_dict.values():
+			options_dict[option_value] = option_text
+			print(option_value,option_text)
+		else:
+			continue        
         
     element_dropdown = browser.find_element_by_name('nmSelectFondo')
     select = Select(element_dropdown)

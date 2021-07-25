@@ -45,11 +45,11 @@ def main(browser):
         # Using a regular expression to extract the value of the option
         option_value = re.findall('\"([0-9]{1,2})',str(options[i]))[0]
         option_text = option.text
-		if option_text not in options_dict.values():
-			options_dict[option_value] = option_text
-			print(option_value,option_text)
-		else:
-			continue        
+        if option_text not in options_dict.values():
+            options_dict[option_value] = option_text
+            print(option_value,option_text)
+        else:
+            continue
         
     element_dropdown = browser.find_element_by_name('nmSelectFondo')
     select = Select(element_dropdown)
@@ -68,7 +68,8 @@ def main(browser):
         soup = BeautifulSoup(html, 'lxml')
     
         df = pd.read_html(html)
-        df = pd.DataFrame(df[0])
+        #df = pd.DataFrame(df[0]) # when the base web page is grupobancolombia
+        df = pd.DataFrame(df[2]) # when the base web page is valores.grupobancolombia
     
         general_info_df = df.loc[:4,:].T
         general_info_df = general_info_df.loc[~general_info_df.duplicated(keep = 'first'),:].T
@@ -125,6 +126,11 @@ def main(browser):
     
         current_fund_info['Fecha de Cierre'] = pd.to_datetime(current_fund_info['Fecha de Cierre'], format = '%Y/%m/%d')
         current_fund_info['Fecha Extracción']= pd.to_datetime(time.strftime('%Y/%m/%d', time.localtime(time.time())))
+        
+        # Re ordering the columns
+        current_fund_info = current_fund_info[['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos','7 días',
+                                               '30 días','180 días','Año corrido','Último año','Últimos dos años','Últimos tres años',
+                                               'Fecha de Cierre','Fondo administrador por','Calificación','Plazo',]]
     
         temp = pd.concat([temp,current_fund_info])
         
@@ -132,13 +138,18 @@ def main(browser):
     
     # Appending new data to the historial dataset
     historical_df = pd.concat([historical_df, temp]).reset_index(drop = True)
+    historical_df = historical_df[['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos','7 días',
+                                   '30 días','180 días','Año corrido','Último año','Últimos dos años','Últimos tres años',
+                                   'Fecha de Cierre','Fondo administrador por','Calificación','Plazo',]]
+
     
     print('upgrading file...')
     historical_df.to_excel('investment_funds.xlsx',index = False)
     print('file successfully upgraded')
     
 if __name__ == "__main__":
-    site_url = 'https://www.grupobancolombia.com/personas/productos-servicios/inversiones/fondos-inversion-colectiva/aplicacion-fondos/'
+    #site_url = 'https://www.grupobancolombia.com/personas/productos-servicios/inversiones/fondos-inversion-colectiva/aplicacion-fondos/'
+    site_url = 'https://valores.grupobancolombia.com/wps/portal/valores-bancolombia/productos-servicios/fondos-inversion-colectiva/aplicacion-fondos'    
     
     options = Options()
     options.add_argument("--headless") # To Avoid the navigator to open

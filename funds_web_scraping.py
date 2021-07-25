@@ -25,7 +25,17 @@ def open_excel(excel_path = 'investment_funds.xlsx'):
     saved_data = pd.read_excel(excel_path)
     return saved_data
 
-def main(browser):
+
+def get_browser(URL):
+    options = Options()
+    options.add_argument("--headless") # To Avoid the navigator to open
+    
+    browser = webdriver.Chrome(options= options)
+    
+    return browser
+
+
+def bancolombia_web_scraping(browser, site_url):
         
     browser.get(site_url)
     time.sleep(2)
@@ -146,14 +156,87 @@ def main(browser):
     print('upgrading file...')
     historical_df.to_excel('investment_funds.xlsx',index = False)
     print('file successfully upgraded')
+
+    
+def credicorp_web_scraping(browser, site_url):
+    browser.get(site_url)
+    time.sleep(2)
+    default_html = browser.page_source
+    
+    soup = BeautifulSoup(default_html, 'lxml')
+
+    historical_df = open_excel()
+    
+    df = pd.read_html(default_html)
+    
+    closing_date_df = pd.DataFrame(df[1]).loc[0,:].T
+    
+    fund_value_df = pd.DataFrame(df[1]).loc[1,:].T
+
+    fund_info = pd.concat([pd.DataFrame(df[2]).loc[0:1,:],closing_date_df,fund_value_df], axis = 1)
+    
+    fund_info.columns = fund_info.loc[0,:]
+    fund_info.drop(0,axis = 0, inplace = True)
+    
+    fund_info['Fondo de Inversion'] = 'Acciones Globales'
+    fund_info['Calificación'] = 'No Aplica'
+    fund_info['Plazo'] = 'No aplica'
+    fund_info['Fondo administrador por'] = 'Credicorp Capital'
+    fund_info['7 días'] = np.nan
+    
+    fund_info.drop(['Tipo de participación','Valor TP (en MM)'], axis = 1, inplace = True)
+    
+    fund_info.rename(columns = {'Valor Unidad TP':'Valor de la unidad',
+                                'Último Mes':'30 días',
+                                'Últimos 6 Meses':'180 días',
+                                'Año Corrido':'Año corrido',
+                                'Último Año':'Último año',
+                                'Últimos 2 Años':'Últimos dos años',
+                                'Últimos 3 Años':'Últimos tres años',
+                                'Fecha Cierre':'Fecha de Cierre',
+                                'Valor del Fondo':'Valor en Pesos'}
+                     , inplace = True)
+    
+    fund_info = fund_info.apply(lambda x: x.str.replace('$','') if x.dtype == 'object' else x, axis = 0)
+    fund_info = fund_info.apply(lambda x: x.str.replace('%','') if x.dtype == 'object' else x, axis = 0)
+    fund_info = fund_info.apply(lambda x: x.str.replace(',','') if x.dtype == 'object' else x, axis = 0)
+    
+    float_columns = ['Valor de la unidad', '30 días', '180 días', 'Año corrido', 'Último año', 'Últimos dos años',
+                     'Últimos tres años','Valor en Pesos']
+    
+    fund_info[float_columns] = fund_info[float_columns].apply(lambda x: x.astype('float'), axis = 0)
+    
+    fund_info['Fecha de Cierre'] = pd.to_datetime(fund_info['Fecha de Cierre'], format = '%Y/%m/%d')
+    fund_info['Fecha Extracción']= pd.to_datetime(time.strftime('%Y/%m/%d', time.localtime(time.time())))
+    
+     # Re ordering the columns
+    fund_info = fund_info[['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos','7 días',
+                           '30 días','180 días','Año corrido','Último año','Últimos dos años','Últimos tres años',
+                           'Fecha de Cierre','Fondo administrador por','Calificación','Plazo',]]
+
+    browser.quit()
+    
+    historical_df = pd.concat([historical_df, fund_info]).reset_index(drop = True)
+    
+    print('upgrading file...')
+    historical_df.to_excel('investment_funds.xlsx',index = False)
+    print('file successfully upgraded')
+        
     
 if __name__ == "__main__":
-    #site_url = 'https://www.grupobancolombia.com/personas/productos-servicios/inversiones/fondos-inversion-colectiva/aplicacion-fondos/'
-    site_url = 'https://valores.grupobancolombia.com/wps/portal/valores-bancolombia/productos-servicios/fondos-inversion-colectiva/aplicacion-fondos'    
+    #bancolombia_site_url = 'https://www.grupobancolombia.com/personas/productos-servicios/inversiones/fondos-inversion-colectiva/aplicacion-fondos/'
+    bancolombia_site_url = 'https://valores.grupobancolombia.com/wps/portal/valores-bancolombia/productos-servicios/fondos-inversion-colectiva/aplicacion-fondos'    
     
-    options = Options()
-    options.add_argument("--headless") # To Avoid the navigator to open
+    credicorp_site_url = 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGA.aspx'
     
-    browser = webdriver.Chrome(options= options)
+    # Get the browser for the bancolombia url
+    browser = get_browser(bancolombia_site_url)
+
+    bancolombia_web_scraping(browser, bancolombia_site_url)
     
-    main(browser)
+    # Get the browser for the credicorp url
+    browser = get_browser(credicorp_site_url)
+    
+    credicorp_web_scraping(browser, credicorp_site_url)
+    
+    

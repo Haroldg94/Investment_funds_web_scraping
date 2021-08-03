@@ -138,9 +138,11 @@ def bancolombia_web_scraping(browser, site_url):
         current_fund_info['Fecha Extracción']= pd.to_datetime(time.strftime('%Y/%m/%d', time.localtime(time.time())))
         
         # Re ordering the columns
-        current_fund_info = current_fund_info[['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos','7 días',
-                                               '30 días','180 días','Año corrido','Último año','Últimos dos años','Últimos tres años',
-                                               'Fecha de Cierre','Fondo administrador por','Calificación','Plazo',]]
+        current_fund_info = current_fund_info[
+            ['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos','7 días','30 días',
+            '180 días','Año corrido','Último año','Últimos dos años','Últimos tres años','Fecha de Cierre',
+            'Fondo administrador por','Calificación','Plazo',]
+            ]
     
         temp = pd.concat([temp,current_fund_info])
         
@@ -148,9 +150,9 @@ def bancolombia_web_scraping(browser, site_url):
     
     # Appending new data to the historial dataset
     historical_df = pd.concat([historical_df, temp]).reset_index(drop = True)
-    historical_df = historical_df[['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos','7 días',
-                                   '30 días','180 días','Año corrido','Último año','Últimos dos años','Últimos tres años',
-                                   'Fecha de Cierre','Fondo administrador por','Calificación','Plazo',]]
+    historical_df = historical_df[['Fondo de Inversion','Fecha Extracción','Valor de la unidad','Valor en Pesos',
+     '7 días','30 días','180 días','Año corrido','Último año','Últimos dos años','Últimos tres años',
+     'Fecha de Cierre','Fondo administrador por','Calificación','Plazo']]
 
     
     print('upgrading file...')
@@ -158,7 +160,7 @@ def bancolombia_web_scraping(browser, site_url):
     print('file successfully upgraded')
 
     
-def credicorp_web_scraping(browser, site_url):
+def credicorp_web_scraping(browser, site_url, key):
     browser.get(site_url)
     time.sleep(2)
     default_html = browser.page_source
@@ -178,7 +180,7 @@ def credicorp_web_scraping(browser, site_url):
     fund_info.columns = fund_info.loc[0,:]
     fund_info.drop(0,axis = 0, inplace = True)
     
-    fund_info['Fondo de Inversion'] = 'Acciones Globales'
+    fund_info['Fondo de Inversion'] = key
     fund_info['Calificación'] = 'No Aplica'
     fund_info['Plazo'] = 'No aplica'
     fund_info['Fondo administrador por'] = 'Credicorp Capital'
@@ -227,16 +229,18 @@ if __name__ == "__main__":
     #bancolombia_site_url = 'https://www.grupobancolombia.com/personas/productos-servicios/inversiones/fondos-inversion-colectiva/aplicacion-fondos/'
     bancolombia_site_url = 'https://valores.grupobancolombia.com/wps/portal/valores-bancolombia/productos-servicios/fondos-inversion-colectiva/aplicacion-fondos'    
     
-    credicorp_site_url = 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGA.aspx'
+    credicorp_sites_url = {'Acciones Globales':'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGA.aspx','Renta Fija Global':'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGRF.aspx'}
     
     # Get the browser for the bancolombia url
     browser = get_browser(bancolombia_site_url)
 
     bancolombia_web_scraping(browser, bancolombia_site_url)
     
-    # Get the browser for the credicorp url
-    browser = get_browser(credicorp_site_url)
-    
-    credicorp_web_scraping(browser, credicorp_site_url)
+    # Iterating through the credicorp investment funds
+    for key in credicorp_sites_url:
+        # Get the browser for the credicorp url
+        browser = get_browser(credicorp_sites_url[key])
+        
+        credicorp_web_scraping(browser, credicorp_sites_url[key], key)
     
     

@@ -116,10 +116,18 @@ def bancolombia_web_scraping(browser, site_url):
         current_fund_info['Valor en Pesos'] = current_fund_info['Valor en Pesos'].str.replace(',','').astype('float')
         current_fund_info[str_columns] = current_fund_info[str_columns].apply(lambda x: x.str.replace(',','.'), axis = 0)
         
+        # Useful when some fund have a wrong % number on the web
+        #try:
+        #    current_fund_info[str_columns] = current_fund_info[str_columns].apply(lambda x : x.astype('float') 
+        #                                                                    if ~x.str.contains('N/A').any() 
+        #                                                                    else x.astype('object'), axis = 0)
+        #except:
+        #    pass        
+             
         current_fund_info[str_columns] = current_fund_info[str_columns].apply(lambda x : x.astype('float') 
-                                                                          if ~x.str.contains('N/A').any() 
-                                                                          else x.astype('object'), axis = 0)
-        
+                                                                            if ~x.str.contains('N/A').any() 
+                                                                            else x.astype('object'), axis = 0) 
+
         #current_fund_info = current_fund_info.astype({'Valor de la unidad':'float64',                          
         #                                              'Valor en Pesos':'float64',
         #                                              '7 días':'float64',

@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 import time
 import re
+import os
 
 
 def selecting_fund(select, value_to_select):
@@ -21,7 +22,7 @@ def selecting_fund(select, value_to_select):
     return html
 
 
-def open_excel(excel_path = 'investment_funds.xlsx'):
+def open_excel(excel_path):
     saved_data = pd.read_excel(excel_path)
     return saved_data
 
@@ -30,16 +31,18 @@ def get_browser(URL):
     options = Options()
     options.add_argument("--headless") # To Avoid the navigator to open
     
-    browser = webdriver.Chrome(options= options)
-    
+    browser = webdriver.Chrome(options= options, executable_path=r'D:\Giovanny\Inversiones\chromedriver.exe')    
+
     return browser
 
 
-def bancolombia_web_scraping(browser, site_url):
+def bancolombia_web_scraping(browser, site_url, cwd):
         
     browser.get(site_url)
     time.sleep(3)
     default_html = browser.page_source
+
+    historical_path = os.path.join(cwd,'investment_funds.xlsx')
     
     soup = BeautifulSoup(default_html, 'lxml')
     
@@ -64,7 +67,7 @@ def bancolombia_web_scraping(browser, site_url):
     element_dropdown = browser.find_element_by_name('nmSelectFondo')
     select = Select(element_dropdown)
     
-    historical_df = open_excel()
+    historical_df = open_excel(historical_path)
     
     temp = pd.DataFrame(columns = historical_df.columns)
     
@@ -163,18 +166,20 @@ def bancolombia_web_scraping(browser, site_url):
 
     
     print('upgrading file...')
-    historical_df.to_excel('investment_funds.xlsx',index = False)
+    historical_df.to_excel(historical_path,index = False)
     print('file successfully upgraded')
 
     
-def credicorp_web_scraping(browser, site_url, key):
+def credicorp_web_scraping(browser, site_url, key, cwd):
     browser.get(site_url)
     time.sleep(2)
     default_html = browser.page_source
+
+    historical_path = os.path.join(cwd,'investment_funds.xlsx')
     
     soup = BeautifulSoup(default_html, 'lxml')
 
-    historical_df = open_excel()
+    historical_df = open_excel(historical_path)
     
     df = pd.read_html(default_html)
     
@@ -228,11 +233,14 @@ def credicorp_web_scraping(browser, site_url, key):
     historical_df = pd.concat([historical_df, fund_info]).reset_index(drop = True)
     
     print('upgrading file...')
-    historical_df.to_excel('investment_funds.xlsx',index = False)
+    historical_df.to_excel(historical_path,index = False)
     print('file successfully upgraded')
         
     
 if __name__ == "__main__":
+
+    cwd = r'D:\Giovanny\Inversiones'
+
     bancolombia_site_url = 'https://www.grupobancolombia.com/personas/productos-servicios/inversiones/fondos-inversion-colectiva/aplicacion-fondos/'
     #bancolombia_site_url = 'https://valores.grupobancolombia.com/wps/portal/valores-bancolombia/productos-servicios/fondos-inversion-colectiva/aplicacion-fondos'    
     
@@ -241,13 +249,13 @@ if __name__ == "__main__":
     # Get the browser for the bancolombia url
     browser = get_browser(bancolombia_site_url)
 
-    bancolombia_web_scraping(browser, bancolombia_site_url)
+    bancolombia_web_scraping(browser, bancolombia_site_url, cwd)
     
     # Iterating through the credicorp investment funds
     for key in credicorp_sites_url:
         # Get the browser for the credicorp url
         browser = get_browser(credicorp_sites_url[key])
         
-        credicorp_web_scraping(browser, credicorp_sites_url[key], key)
+        credicorp_web_scraping(browser, credicorp_sites_url[key], key, cwd)
     
     

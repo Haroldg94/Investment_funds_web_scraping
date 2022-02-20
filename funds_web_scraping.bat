@@ -1,0 +1,1 @@
+"C:\Users\Harold Garcia\AppData\Local\Programs\Python\Python37\python.exe" "D:\Giovanny\Inversiones\funds_web_scraping.py"

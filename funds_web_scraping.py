@@ -120,7 +120,7 @@ def bancolombia_web_scraping(browser, site_url, cwd):
             if current_fund_info['Fondo administrador por'].str.contains('Fiduciaria').any():
                 str_columns = ['7 días','30 días','180 días','Año corrido',
                             'Último año','Últimos dos años','Últimos tres años']
-                current_fund_info['Valor de la unidad'] = current_fund_info['Valor de la unidad'].astype('float')*1000
+                current_fund_info['Valor de la unidad'] = current_fund_info['Valor de la unidad'].str.replace(',','').astype('float')*1000
                 current_fund_info[str_columns] = current_fund_info[str_columns].apply(lambda x: x.str.replace('.',''), axis = 0)
                 current_fund_info[str_columns] = current_fund_info[str_columns].apply(lambda x: x.str.replace(',','.'), axis = 0)
             else:
@@ -153,7 +153,9 @@ def bancolombia_web_scraping(browser, site_url, cwd):
                 ]
         
             temp = pd.concat([temp,current_fund_info])
+            print(f'Successfully extracted data for: {options_dict[val]}')
         except:
+            print('Error:')
             continue
         
     browser.quit()

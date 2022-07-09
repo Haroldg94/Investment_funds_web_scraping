@@ -175,7 +175,7 @@ def bancolombia_web_scraping(browser, site_url, cwd):
     print('file successfully upgraded')
 
 
-def credicorp_web_scraping(browser, site_url, key, cwd):
+def credicorp_web_scraping(browser, site_url, key, idx_df1, idx_df2, cwd):
     browser.get(site_url)
     time.sleep(2)
     default_html = browser.page_source
@@ -188,11 +188,11 @@ def credicorp_web_scraping(browser, site_url, key, cwd):
 
     df = pd.read_html(default_html)
 
-    closing_date_df = pd.DataFrame(df[1]).loc[0, :].T
+    closing_date_df = pd.DataFrame(df[idx_df1]).loc[0, :].T
 
-    fund_value_df = pd.DataFrame(df[1]).loc[1, :].T
+    fund_value_df = pd.DataFrame(df[idx_df1]).loc[1, :].T
 
-    fund_info = pd.concat([pd.DataFrame(df[2]).loc[0:1, :], closing_date_df, fund_value_df], axis=1)
+    fund_info = pd.concat([pd.DataFrame(df[idx_df2]).loc[0:1, :], closing_date_df, fund_value_df], axis=1)
 
     fund_info.columns = fund_info.loc[0, :]
     fund_info.drop(0, axis=0, inplace=True)
@@ -251,8 +251,24 @@ if __name__ == "__main__":
     # bancolombia_site_url = 'https://valores.grupobancolombia.com/wps/portal/valores-bancolombia/productos-
     # servicios/fondos-inversion-colectiva/aplicacion-fondos'
 
-    credicorp_sites_url = {'Acciones Globales': 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGA.aspx',
-                           'Renta Fija Global': 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGRF.aspx'}
+    credicorp_sites_url = {'Acciones Globales': {'url': 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGA.aspx',
+                                                 'idx_df1': 1,
+                                                 'idx_df2': 2},
+                           'Renta Fija Global': {'url': 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FGRF.aspx',
+                                                 'idx_df1': 1,
+                                                 'idx_df2': 2},
+                           'Deuda Corporativa': {'url':'https://www.credicorpcapital.com/Colombia/Neg//GA/Paginas/DCF.aspx',
+                                                 'idx_df1': 1,
+                                                 'idx_df2': 2},
+                           'Alta Liquidez': {'url':  'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/CCAL.aspx',
+                                             'idx_df1': 0,
+                                             'idx_df2': 1},
+                           'Renta Fija Colombia': {'url': 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FR-FC.aspx',
+                                                   'idx_df1': 0,
+                                                   'idx_df2': 1},
+                           'Acciones Colombia': {'url': 'https://www.credicorpcapital.com/Colombia/Neg/GA/Paginas/FAD.aspx',
+                                                 'idx_df1': 1,
+                                                 'idx_df2': 2}}
 
     # Get the browser for the bancolombia url
     browser = get_browser(bancolombia_site_url)
@@ -262,6 +278,7 @@ if __name__ == "__main__":
     # Iterating through the credicorp investment funds
     for key in credicorp_sites_url:
         # Get the browser for the credicorp url
-        browser = get_browser(credicorp_sites_url[key])
+        browser = get_browser(credicorp_sites_url[key]['url'])
 
-        credicorp_web_scraping(browser, credicorp_sites_url[key], key, cwd)
+        credicorp_web_scraping(browser, credicorp_sites_url[key]['url'], key, credicorp_sites_url[key]['idx_df1'],
+                               credicorp_sites_url[key]['idx_df2'], cwd)

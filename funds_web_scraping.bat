@@ -1,1 +1,1 @@
-"C:\Program Files\Python37\python.exe" "D:\Giovanny\Inversiones\funds_web_scraping.py"
+"D:\Giovanny\Inversiones\fws_venv\Scripts\python.exe" "D:\Giovanny\Inversiones\funds_web_scraping.py"

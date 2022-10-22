@@ -36,6 +36,11 @@ def get_browser(URL):
     return browser
 
 
+def backup_data(df, path):
+    backup_path = os.path.join(path, 'backup', 'investment_funds.xlsx')
+    df.to_excel(backup_path, index=False)
+
+
 def bancolombia_web_scraping(browser, site_url, cwd):
     browser.get(site_url)
     time.sleep(3)
@@ -172,6 +177,7 @@ def bancolombia_web_scraping(browser, site_url, cwd):
 
     print('upgrading file...')
     historical_df.to_excel(historical_path, index=False)
+    backup_data(historical_df, cwd)
     print('file successfully upgraded')
 
 
@@ -239,6 +245,7 @@ def credicorp_web_scraping(browser, site_url, key, idx_df1, idx_df2, cwd):
 
     print('upgrading file...')
     historical_df.to_excel(historical_path, index=False)
+    backup_data(historical_df, cwd)
     print('file successfully upgraded')
 
 
@@ -279,6 +286,9 @@ if __name__ == "__main__":
     for key in credicorp_sites_url:
         # Get the browser for the credicorp url
         browser = get_browser(credicorp_sites_url[key]['url'])
-
-        credicorp_web_scraping(browser, credicorp_sites_url[key]['url'], key, credicorp_sites_url[key]['idx_df1'],
-                               credicorp_sites_url[key]['idx_df2'], cwd)
+        try:
+            credicorp_web_scraping(browser, credicorp_sites_url[key]['url'], key, credicorp_sites_url[key]['idx_df1'],
+                                   credicorp_sites_url[key]['idx_df2'], cwd)
+        except Exception as e:
+            print(f'Error processing data for {key}: ', e)
+            continue

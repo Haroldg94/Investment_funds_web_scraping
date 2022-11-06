@@ -8,10 +8,19 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 import re
 import os
+import logging
+from datetime import datetime
 
+# Logger configuration
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formater = logging.Formatter('[%(asctime)s] - %(levelname)s - %(message)s')
+fh = logging.FileHandler('./logs/data_processing'+datetime.today().strftime('%Y%m%d')+'.log')# , mode='w')
+fh.setFormatter(formater)
+logger.addHandler(fh)
 
 def selecting_fund(select, value_to_select):
-    """function that selects a investment fund by value on a webpage's dropdown """
+    """function that selects an investment fund by value on a webpage's dropdown """
 
     # select by value
     select.select_by_value(value_to_select)
@@ -64,7 +73,7 @@ def bancolombia_web_scraping(browser, site_url, cwd):
         option_text = option.text
         if option_text not in options_dict.values():
             options_dict[option_value] = option_text
-            print(option_value, option_text)
+            logger.debug(f'{option_value} {option_text}')
         else:
             continue
 
@@ -78,7 +87,7 @@ def bancolombia_web_scraping(browser, site_url, cwd):
     for val in options_dict.keys():
         fund_to_select = val
 
-        print('Extracting information for: ' + options_dict[val])
+        logger.debug('Extracting information for: ' + options_dict[val])
 
         html = selecting_fund(select, fund_to_select)
 
@@ -161,9 +170,9 @@ def bancolombia_web_scraping(browser, site_url, cwd):
             ]
 
             temp = pd.concat([temp, current_fund_info])
-            print(f'Successfully extracted data for: {options_dict[val]}')
-        except:
-            print('Error:')
+            logger.debug(f'Successfully extracted data for: {options_dict[val]}')
+        except Exception as e:
+            logger.error(f'Error: {e}')
             continue
 
     browser.quit()
@@ -175,10 +184,10 @@ def bancolombia_web_scraping(browser, site_url, cwd):
                                    'Últimos tres años', 'Fecha de Cierre', 'Fondo administrador por', 'Calificación',
                                    'Plazo']]
 
-    print('upgrading file...')
+    logger.debug('upgrading file...')
     historical_df.to_excel(historical_path, index=False)
     backup_data(historical_df, cwd)
-    print('file successfully upgraded')
+    logger.debug('file successfully upgraded')
 
 
 def credicorp_web_scraping(browser, site_url, key, idx_df1, idx_df2, cwd):
@@ -243,10 +252,10 @@ def credicorp_web_scraping(browser, site_url, key, idx_df1, idx_df2, cwd):
 
     historical_df = pd.concat([historical_df, fund_info]).reset_index(drop=True)
 
-    print('upgrading file...')
+    logger.debug('upgrading file...')
     historical_df.to_excel(historical_path, index=False)
     backup_data(historical_df, cwd)
-    print('file successfully upgraded')
+    logger.debug('file successfully upgraded')
 
 
 if __name__ == "__main__":
@@ -290,5 +299,5 @@ if __name__ == "__main__":
             credicorp_web_scraping(browser, credicorp_sites_url[key]['url'], key, credicorp_sites_url[key]['idx_df1'],
                                    credicorp_sites_url[key]['idx_df2'], cwd)
         except Exception as e:
-            print(f'Error processing data for {key}: ', e)
+            logger.error(f'Error processing data for {key}: {e}')
             continue
